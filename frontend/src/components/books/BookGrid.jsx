@@ -1,17 +1,27 @@
 import BookCard from "./BookCard";
 
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-xl border border-border overflow-hidden animate-pulse">
+      <div className="aspect-[3/4] bg-light-bg" />
+      <div className="p-4">
+        <div className="h-5 bg-light-bg rounded w-3/4" />
+        <div className="h-4 bg-light-bg rounded w-1/2 mt-2" />
+        <div className="flex justify-between items-center mt-3">
+          <div className="h-6 bg-light-bg rounded w-16" />
+          <div className="w-10 h-10 bg-light-bg rounded-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BookGrid({ books, loading, onBookClick, onAddToCart }) {
   if (loading) {
     return (
-      <div
-        id="book-grid"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="animate-pulse bg-white rounded-xl h-80"
-          />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <SkeletonCard key={i} />
         ))}
       </div>
     );
@@ -19,33 +29,30 @@ export default function BookGrid({ books, loading, onBookClick, onAddToCart }) {
 
   if (!books || books.length === 0) {
     return (
-      <div id="book-grid" className="text-center py-12">
+      <div className="flex flex-col items-center justify-center py-20 text-center">
         <svg
-          className="mx-auto h-16 w-16 text-bark-300 mb-4"
+          className="w-16 h-16 text-border mb-4"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={1.5}
+          strokeWidth={1}
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
           />
         </svg>
-        <p className="text-bark-500 text-lg font-body">No books found</p>
-        <p className="text-bark-300 text-sm mt-1">
-          Try adjusting your search or filter
+        <h3 className="text-dark font-semibold text-lg">No books found</h3>
+        <p className="text-body text-sm mt-1">
+          Try a different search or category
         </p>
       </div>
     );
   }
 
   return (
-    <div
-      id="book-grid"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {books.map((book) => (
         <BookCard
           key={book.id}

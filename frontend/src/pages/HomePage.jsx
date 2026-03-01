@@ -33,27 +33,34 @@ export default function HomePage() {
     <>
       <HeroSection />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <SearchBar value={search} onChange={setSearch} />
-        </div>
+      <section id="book-grid" className="py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Section header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <h2 className="text-2xl font-bold text-dark">Our Books</h2>
+            <CategoryFilter
+              categories={CATEGORIES}
+              activeCategory={category}
+              onCategoryChange={setCategory}
+            />
+          </div>
 
-        <div className="mb-8">
-          <CategoryFilter
-            categories={CATEGORIES}
-            activeCategory={category}
-            onCategoryChange={setCategory}
+          {/* Search bar */}
+          <div className="mb-8">
+            <SearchBar value={search} onChange={setSearch} />
+          </div>
+
+          {/* Book grid */}
+          <BookGrid
+            books={books}
+            loading={loading}
+            onBookClick={setSelectedBook}
+            onAddToCart={addItem}
           />
         </div>
+      </section>
 
-        <BookGrid
-          books={books}
-          loading={loading}
-          onBookClick={setSelectedBook}
-          onAddToCart={addItem}
-        />
-      </div>
-
+      {/* Book detail modal */}
       <BookDetailModal
         book={selectedBook}
         isOpen={!!selectedBook}

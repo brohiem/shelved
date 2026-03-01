@@ -1,17 +1,18 @@
 import { forwardRef } from "react";
 
 const variantClasses = {
-  primary: "bg-forest-700 text-white hover:bg-forest-800",
-  secondary:
-    "border border-forest-700 text-forest-700 hover:bg-forest-700/10",
-  ghost: "text-forest-700 hover:bg-forest-700/10",
-  danger: "bg-red-600 text-white hover:bg-red-700",
+  primary: "bg-primary text-dark font-semibold hover:bg-primary-dark",
+  secondary: "bg-dark text-white hover:bg-dark/90",
+  outline:
+    "border-2 border-dark text-dark hover:bg-dark hover:text-white bg-transparent",
+  ghost: "text-body hover:text-dark bg-transparent",
+  danger: "bg-danger text-white hover:bg-danger/90",
 };
 
 const sizeClasses = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-base",
-  lg: "px-6 py-3 text-lg",
+  sm: "px-4 py-2 text-sm",
+  md: "px-6 py-2.5 text-base",
+  lg: "px-8 py-3 text-lg",
 };
 
 const Button = forwardRef(function Button(
@@ -38,8 +39,8 @@ const Button = forwardRef(function Button(
       onClick={onClick}
       disabled={isDisabled}
       className={`
-        inline-flex items-center justify-center rounded-lg font-body font-medium
-        transition-colors duration-200 cursor-pointer
+        inline-flex items-center justify-center rounded-full font-body font-medium
+        transition-all duration-200 cursor-pointer
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantClasses[variant]}
         ${sizeClasses[size]}

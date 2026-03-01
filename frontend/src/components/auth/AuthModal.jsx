@@ -6,7 +6,6 @@ import RegisterForm from "./RegisterForm";
 export default function AuthModal({ isOpen, onClose, initialTab = "login" }) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Reset to initial tab when modal opens
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
@@ -17,21 +16,30 @@ export default function AuthModal({ isOpen, onClose, initialTab = "login" }) {
     onClose();
   };
 
+  const isLogin = activeTab === "login";
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="sm">
-      {/* Title */}
-      <h3 className="text-2xl font-display font-semibold text-forest-900 text-center mb-6">
-        Welcome to Shelved
-      </h3>
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-bold text-dark">
+          {isLogin ? "Welcome Back" : "Create Account"}
+        </h3>
+        <p className="text-body text-sm mt-1">
+          {isLogin
+            ? "Sign in to your account"
+            : "Join Shelved today"}
+        </p>
+      </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
+      {/* Tab switcher */}
+      <div className="flex border-b border-border mb-6">
         <button
           onClick={() => setActiveTab("login")}
           className={`flex-1 pb-3 text-sm font-medium transition-colors cursor-pointer ${
-            activeTab === "login"
-              ? "text-forest-700 border-b-2 border-forest-700"
-              : "text-bark-300 hover:text-bark-500"
+            isLogin
+              ? "border-b-2 border-primary text-dark"
+              : "text-body hover:text-dark"
           }`}
         >
           Sign In
@@ -39,9 +47,9 @@ export default function AuthModal({ isOpen, onClose, initialTab = "login" }) {
         <button
           onClick={() => setActiveTab("register")}
           className={`flex-1 pb-3 text-sm font-medium transition-colors cursor-pointer ${
-            activeTab === "register"
-              ? "text-forest-700 border-b-2 border-forest-700"
-              : "text-bark-300 hover:text-bark-500"
+            !isLogin
+              ? "border-b-2 border-primary text-dark"
+              : "text-body hover:text-dark"
           }`}
         >
           Create Account
@@ -49,22 +57,22 @@ export default function AuthModal({ isOpen, onClose, initialTab = "login" }) {
       </div>
 
       {/* Form */}
-      {activeTab === "login" ? (
+      {isLogin ? (
         <LoginForm onSuccess={handleSuccess} />
       ) : (
         <RegisterForm onSuccess={handleSuccess} />
       )}
 
-      {/* Toggle link */}
-      <p className="text-center text-sm text-bark-300 mt-6">
-        {activeTab === "login" ? (
+      {/* Bottom toggle text */}
+      <p className="text-center text-sm text-body mt-6">
+        {isLogin ? (
           <>
             Don&apos;t have an account?{" "}
             <button
               onClick={() => setActiveTab("register")}
-              className="text-forest-700 hover:text-forest-800 font-medium underline underline-offset-2 cursor-pointer"
+              className="text-primary-dark hover:text-dark font-medium cursor-pointer"
             >
-              Create one
+              Sign Up
             </button>
           </>
         ) : (
@@ -72,9 +80,9 @@ export default function AuthModal({ isOpen, onClose, initialTab = "login" }) {
             Already have an account?{" "}
             <button
               onClick={() => setActiveTab("login")}
-              className="text-forest-700 hover:text-forest-800 font-medium underline underline-offset-2 cursor-pointer"
+              className="text-primary-dark hover:text-dark font-medium cursor-pointer"
             >
-              Sign in
+              Sign In
             </button>
           </>
         )}

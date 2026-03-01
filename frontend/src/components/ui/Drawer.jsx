@@ -29,17 +29,16 @@ export default function Drawer({ isOpen, onClose, title, children }) {
 
       {/* Panel */}
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl animate-slide-in-right flex flex-col"
+        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl animate-slide-in-right flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-display font-semibold text-forest-900">
-            {title}
-          </h2>
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-dark">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-full
+              text-body hover:bg-light-bg hover:text-dark transition-all duration-200 cursor-pointer"
             aria-label="Close drawer"
           >
             <svg
@@ -59,7 +58,7 @@ export default function Drawer({ isOpen, onClose, title, children }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>,
     document.body

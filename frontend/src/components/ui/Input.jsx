@@ -1,14 +1,20 @@
-export default function Input({
-  label,
-  type = "text",
-  value,
-  onChange,
-  error,
-  placeholder,
-  required = false,
-  id,
-  className = "",
-}) {
+import { forwardRef } from "react";
+
+const Input = forwardRef(function Input(
+  {
+    label,
+    type = "text",
+    value,
+    onChange,
+    error,
+    placeholder,
+    required = false,
+    id,
+    className = "",
+    ...rest
+  },
+  ref
+) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
   return (
@@ -16,13 +22,14 @@ export default function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="text-sm font-medium font-body text-forest-900"
+          className="text-sm font-medium text-dark mb-1"
         >
           {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
+          {required && <span className="text-danger ml-0.5">*</span>}
         </label>
       )}
       <input
+        ref={ref}
         id={inputId}
         type={type}
         value={value}
@@ -30,15 +37,17 @@ export default function Input({
         placeholder={placeholder}
         required={required}
         className={`
-          w-full px-3 py-2 rounded-lg border font-body
-          focus:outline-none focus:ring-2 focus:ring-forest-700 focus:border-transparent
-          transition-colors
-          ${error ? "border-red-500" : "border-gray-300"}
+          w-full px-4 py-3 rounded-lg border font-body text-dark
+          placeholder:text-body/50
+          focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
+          transition-all duration-200
+          ${error ? "border-danger" : "border-border"}
         `}
+        {...rest}
       />
-      {error && (
-        <p className="text-sm text-red-500 font-body">{error}</p>
-      )}
+      {error && <p className="text-sm text-danger mt-0.5">{error}</p>}
     </div>
   );
-}
+});
+
+export default Input;

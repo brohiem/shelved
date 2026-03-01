@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-const statusColors = {
-  pending: "bg-amber-100 text-amber-700",
-  confirmed: "bg-blue-100 text-blue-700",
-  shipped: "bg-purple-100 text-purple-700",
-  delivered: "bg-green-100 text-green-700",
+const statusStyles = {
+  pending: "bg-yellow-50 text-yellow-600 border border-yellow-200",
+  confirmed: "bg-blue-50 text-blue-600 border border-blue-200",
+  shipped: "bg-purple-50 text-purple-600 border border-purple-200",
+  delivered: "bg-green-50 text-green-600 border border-green-200",
 };
 
 function formatDate(dateStr) {
@@ -18,39 +18,38 @@ function formatDate(dateStr) {
 export default function OrderCard({ order }) {
   const [expanded, setExpanded] = useState(false);
 
-  const statusClass = statusColors[order.status] || "bg-gray-100 text-gray-700";
+  const statusClass =
+    statusStyles[order.status] || "bg-gray-50 text-gray-600 border border-gray-200";
 
   return (
-    <div
-      className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => setExpanded(!expanded)}
-    >
-      {/* Collapsed header */}
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-border overflow-hidden">
+      {/* Header row */}
+      <div
+        className="p-4 flex items-center justify-between cursor-pointer hover:bg-light-bg/50 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
         <div className="flex items-center gap-4">
-          <span className="font-medium text-forest-900">
-            Order #{order.id}
-          </span>
-          <span className="text-sm text-bark-300">
+          <span className="font-semibold text-dark">Order #{order.id}</span>
+          <span className="text-sm text-body">
             {formatDate(order.created_at)}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="font-semibold text-forest-700">
+          <span className="font-bold text-dark">
             ${Number(order.total).toFixed(2)}
           </span>
 
           {/* Status badge */}
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusClass}`}
+            className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusClass}`}
           >
             {order.status}
           </span>
 
           {/* Chevron */}
           <svg
-            className={`h-5 w-5 text-bark-300 transition-transform duration-200 ${
+            className={`w-5 h-5 text-body transition-transform duration-200 ${
               expanded ? "rotate-180" : ""
             }`}
             fill="none"
@@ -67,39 +66,41 @@ export default function OrderCard({ order }) {
         </div>
       </div>
 
-      {/* Expanded line items */}
-      {expanded && order.items && (
-        <div className="mt-4 border-t border-gray-100 pt-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-bark-300">
-                <th className="pb-2 font-medium">Title</th>
-                <th className="pb-2 font-medium">Author</th>
-                <th className="pb-2 font-medium text-center">Qty</th>
-                <th className="pb-2 font-medium text-right">Price</th>
-                <th className="pb-2 font-medium text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
+      {/* Expanded section */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          expanded ? "max-h-[500px]" : "max-h-0"
+        }`}
+      >
+        {order.items && (
+          <div className="bg-light-bg p-4">
+            <div className="space-y-3">
               {order.items.map((item, idx) => (
-                <tr key={idx} className="border-t border-gray-50">
-                  <td className="py-2 text-forest-900">{item.title}</td>
-                  <td className="py-2 text-bark-300">{item.author}</td>
-                  <td className="py-2 text-center text-forest-900">
-                    {item.quantity}
-                  </td>
-                  <td className="py-2 text-right text-bark-300">
-                    ${Number(item.price).toFixed(2)}
-                  </td>
-                  <td className="py-2 text-right font-medium text-forest-700">
-                    ${(Number(item.price) * item.quantity).toFixed(2)}
-                  </td>
-                </tr>
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="text-dark font-medium">{item.title}</span>
+                    {item.author && (
+                      <span className="text-body ml-2">by {item.author}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-6 ml-4">
+                    <span className="text-body">x{item.quantity}</span>
+                    <span className="text-body w-20 text-right">
+                      ${Number(item.price).toFixed(2)}
+                    </span>
+                    <span className="text-dark font-medium w-20 text-right">
+                      ${(Number(item.price) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
