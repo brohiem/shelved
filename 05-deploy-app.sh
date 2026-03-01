@@ -1,14 +1,14 @@
 #!/bin/bash
 # ============================================================
 # STEP 5: Deploy the Bookstore App
-# SSH into GCE and set up the Node.js API + Nginx
+# Creates files locally, SCPs them to GCE, then runs setup via SSH
 # ============================================================
 
 set -e
 
 INSTANCE_NAME="bookstore-server"
 ZONE="us-central1-a"
-DB_PRIVATE_IP="${1:-10.100.0.2}"   # Pass as argument or edit here
+DB_PRIVATE_IP="${1:-10.100.0.2}"
 
 echo "═══════════════════════════════════════════"
 echo "  Step 5: Deploy Bookstore Application"
@@ -18,27 +18,22 @@ echo "  Using DB IP: $DB_PRIVATE_IP"
 echo "  (pass as argument if different: ./05-deploy-app.sh 10.x.x.x)"
 echo ""
 
-# ─── Copy app files and deploy via SSH ───
-echo "→ Deploying app to GCE instance..."
+# ─── Create local staging directory ───
+STAGING=$(mktemp -d)
+trap "rm -rf $STAGING" EXIT
 
-gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command='bash -s' << 'REMOTE_SCRIPT'
+echo "→ Preparing app files locally..."
 
-set -e
-cd /home/$USER
-
-# ─── Create project structure ───
-echo "→ Creating project directories..."
-mkdir -p bookstore-api/{routes,middleware}
-mkdir -p bookstore-frontend/build
+mkdir -p "$STAGING/bookstore-api/routes"
+mkdir -p "$STAGING/bookstore-api/middleware"
+mkdir -p "$STAGING/bookstore-frontend/build"
 
 # ══════════════════════════════════════
 #  BACKEND: Express API
 # ══════════════════════════════════════
 
-echo "→ Writing backend code..."
-
 # package.json
-cat > bookstore-api/package.json << 'PKG'
+cat > "$STAGING/bookstore-api/package.json" << 'PKG'
 {
   "name": "bookstore-api",
   "version": "1.0.0",
@@ -56,8 +51,8 @@ cat > bookstore-api/package.json << 'PKG'
 PKG
 
 # .env file
-cat > bookstore-api/.env << ENV
-DB_HOST=DB_IP_PLACEHOLDER
+cat > "$STAGING/bookstore-api/.env" << ENV
+DB_HOST=$DB_PRIVATE_IP
 DB_USER=bookstore_app
 DB_PASSWORD=ChangeMe_Str0ng!Pass
 DB_NAME=bookstore
@@ -66,11 +61,8 @@ JWT_SECRET=change-this-to-a-random-string-$(openssl rand -hex 16)
 PORT=8080
 ENV
 
-# Replace DB IP placeholder
-sed -i "s/DB_IP_PLACEHOLDER/${DB_PRIVATE_IP:-10.100.0.2}/" bookstore-api/.env 2>/dev/null || true
-
-# ── db.js (MySQL connection pool) ──
-cat > bookstore-api/db.js << 'DBJS'
+# db.js
+cat > "$STAGING/bookstore-api/db.js" << 'DBJS'
 const mysql = require("mysql2/promise");
 require("dotenv").config();
 
@@ -88,8 +80,8 @@ const pool = mysql.createPool({
 module.exports = pool;
 DBJS
 
-# ── server.js ──
-cat > bookstore-api/server.js << 'SERVERJS'
+# server.js
+cat > "$STAGING/bookstore-api/server.js" << 'SERVERJS'
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -118,8 +110,8 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`API running on port ${PORT}`));
 SERVERJS
 
-# ── Auth middleware ──
-cat > bookstore-api/middleware/auth.js << 'AUTHM'
+# Auth middleware
+cat > "$STAGING/bookstore-api/middleware/auth.js" << 'AUTHM'
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
@@ -135,8 +127,8 @@ module.exports = (req, res, next) => {
 };
 AUTHM
 
-# ── Auth routes ──
-cat > bookstore-api/routes/auth.js << 'AUTHR'
+# Auth routes
+cat > "$STAGING/bookstore-api/routes/auth.js" << 'AUTHR'
 const router = require("express").Router();
 const db = require("../db");
 const bcrypt = require("bcryptjs");
@@ -180,8 +172,8 @@ router.post("/login", async (req, res) => {
 module.exports = router;
 AUTHR
 
-# ── Books routes ──
-cat > bookstore-api/routes/books.js << 'BOOKSR'
+# Books routes
+cat > "$STAGING/bookstore-api/routes/books.js" << 'BOOKSR'
 const router = require("express").Router();
 const db = require("../db");
 
@@ -256,8 +248,8 @@ router.delete("/:id", async (req, res) => {
 module.exports = router;
 BOOKSR
 
-# ── Orders routes ──
-cat > bookstore-api/routes/orders.js << 'ORDERSR'
+# Orders routes
+cat > "$STAGING/bookstore-api/routes/orders.js" << 'ORDERSR'
 const router = require("express").Router();
 const db = require("../db");
 const auth = require("../middleware/auth");
@@ -330,16 +322,8 @@ router.post("/", auth, async (req, res) => {
 module.exports = router;
 ORDERSR
 
-# ── Install dependencies ──
-echo "→ Installing Node.js dependencies..."
-cd bookstore-api && npm install && cd ..
-
-# ══════════════════════════════════════
-#  DATABASE: Run schema + seed data
-# ══════════════════════════════════════
-
-echo "→ Creating schema and seeding data..."
-cat > bookstore-api/schema.sql << 'SCHEMA'
+# Schema + seed data
+cat > "$STAGING/bookstore-api/schema.sql" << 'SCHEMA'
 CREATE TABLE IF NOT EXISTS users (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     email       VARCHAR(255) UNIQUE NOT NULL,
@@ -390,19 +374,8 @@ INSERT IGNORE INTO books (title, author, isbn, price, stock, category, descripti
 ('Project Hail Mary', 'Andy Weir', '9780593135204', 14.99, 20, 'Sci-Fi', 'A lone astronaut must save Earth from an extinction-level threat.');
 SCHEMA
 
-# Run schema (uses Cloud SQL private IP directly)
-# You may need to run this manually if mysql client isn't installed:
-#   mysql -h $DB_PRIVATE_IP -u bookstore_app -p bookstore < schema.sql
-echo "  (Run schema manually if mysql client is not available)"
-mysql -h "$DB_PRIVATE_IP" -u bookstore_app -p"ChangeMe_Str0ng!Pass" bookstore < bookstore-api/schema.sql 2>/dev/null || \
-  echo "  → Could not auto-run schema. Run manually after installing mysql-client."
-
-# ══════════════════════════════════════
-#  NGINX: Reverse proxy config
-# ══════════════════════════════════════
-
-echo "→ Configuring Nginx reverse proxy..."
-sudo tee /etc/nginx/sites-available/bookstore > /dev/null << 'NGINX'
+# Nginx config
+cat > "$STAGING/nginx-bookstore.conf" << 'NGINX'
 server {
     listen 80;
     server_name _;
@@ -425,28 +398,58 @@ server {
 }
 NGINX
 
-# Replace username placeholder
-sudo sed -i "s/USER_PLACEHOLDER/$USER/" /etc/nginx/sites-available/bookstore
+# Placeholder index.html for frontend
+cat > "$STAGING/bookstore-frontend/build/index.html" << 'HTML'
+<!DOCTYPE html>
+<html><head><title>Shelved Bookstore</title></head>
+<body><h1>Shelved Bookstore</h1><p>Frontend coming soon. API is live at <a href="/api/health">/api/health</a></p></body>
+</html>
+HTML
+
+echo "✓ Files staged locally"
+
+# ─── SCP files to VM ───
+echo "→ Copying files to GCE instance..."
+gcloud compute scp --recurse "$STAGING/bookstore-api" "$STAGING/bookstore-frontend" "$STAGING/nginx-bookstore.conf" \
+  $INSTANCE_NAME:~/ --zone=$ZONE
+
+echo "✓ Files copied to VM"
+
+# ─── SSH in and run setup ───
+echo "→ Running setup on VM..."
+gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
+set -e
+cd ~
+
+# Install dependencies
+echo '→ Installing Node.js dependencies...'
+cd bookstore-api && npm install && cd ..
+
+# Run schema
+echo '→ Running database schema...'
+mysql -h '$DB_PRIVATE_IP' -u bookstore_app -p'ChangeMe_Str0ng!Pass' bookstore < bookstore-api/schema.sql 2>/dev/null || \
+  echo '  → Could not auto-run schema. Run manually after installing mysql-client.'
+
+# Configure Nginx
+echo '→ Configuring Nginx...'
+sudo cp nginx-bookstore.conf /etc/nginx/sites-available/bookstore
+sudo sed -i \"s/USER_PLACEHOLDER/\$USER/\" /etc/nginx/sites-available/bookstore
 sudo ln -sf /etc/nginx/sites-available/bookstore /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl restart nginx
 
-# ══════════════════════════════════════
-#  START THE APP
-# ══════════════════════════════════════
-
-echo "→ Starting API with PM2..."
+# Start API with PM2
+echo '→ Starting API with PM2...'
 cd bookstore-api
 pm2 start server.js --name bookstore-api
 pm2 save
-pm2 startup systemd -u $USER --hp /home/$USER 2>/dev/null || true
+pm2 startup systemd -u \$USER --hp /home/\$USER 2>/dev/null || true
 cd ..
 
-echo ""
-echo "✓ Bookstore API is running on port 8080"
-echo "✓ Nginx proxy is serving on port 80"
-
-REMOTE_SCRIPT
+echo ''
+echo '✓ Bookstore API is running on port 8080'
+echo '✓ Nginx proxy is serving on port 80'
+"
 
 # ─── Get external IP ───
 EXTERNAL_IP=$(gcloud compute instances describe $INSTANCE_NAME \
