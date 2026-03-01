@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FDF6EC;
+  --color-parchment: #F5EDDF;
+  --color-forest-600: #2D6A4F;
+  --color-forest-700: #1B4332;
+  --color-forest-800: #143325;
+  --color-forest-900: #0D2818;
+  --color-amber-400: #E8A838;
+  --color-amber-500: #D4922A;
+  --color-bark-300: #A67C52;
+  --color-bark-500: #6B4226;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --animate-slide-in-right: slide-in-right 0.3s ease-out;
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-cream);
+  color: var(--color-bark-500);
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--color-forest-900);
+}
